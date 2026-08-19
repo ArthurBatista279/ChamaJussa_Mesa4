@@ -64,11 +64,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#64748B",
     fontWeight: "500",
+    marginRight: 6,
   },
   userRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
   },
   badgeCargo: {
     paddingHorizontal: 6,

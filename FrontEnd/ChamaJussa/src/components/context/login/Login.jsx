@@ -5,9 +5,10 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
+  Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 
 export default function Login({ onLogin }) {
@@ -117,11 +118,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 4,
+    ...Platform.select({
+      web: { boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.08)" },
+      default: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 10,
+        elevation: 4,
+      },
+    }),
     marginBottom: 20,
   },
   avatarBox: {
@@ -164,7 +170,6 @@ const styles = StyleSheet.create({
   cargoSelector: {
     flexDirection: "row",
     width: "100%",
-    gap: 8,
     marginBottom: 18,
   },
   btnCargo: {
@@ -174,6 +179,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F5F9",
     borderWidth: 1,
     borderColor: "#E2E8F0",
+    marginHorizontal: 4,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -224,11 +230,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 10,
-    shadowColor: "#A31F0A",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 3,
+    ...Platform.select({
+      web: { boxShadow: "0px 3px 5px rgba(163, 31, 10, 0.2)" },
+      default: {
+        shadowColor: "#A31F0A",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        elevation: 3,
+      },
+    }),
   },
   textoBotao: {
     color: "#FFFFFF",

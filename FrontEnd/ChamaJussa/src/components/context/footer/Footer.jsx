@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
 export default function Footer({ abaAtiva = "lista", onTrocarAba }) {
@@ -47,11 +47,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
     borderTopColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 8,
+    ...Platform.select({
+      web: { boxShadow: "0px -3px 6px rgba(0, 0, 0, 0.05)" },
+      default: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -3 },
+        shadowOpacity: 0.05,
+        shadowRadius: 6,
+        elevation: 8,
+      },
+    }),
   },
   menu: {
     height: 64,

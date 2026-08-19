@@ -3,6 +3,7 @@
 const API_ENDPOINTS = [
   "https://localhost:7194/api",
   "http://localhost:7194/api",
+  "http://localhost:5263/api",
   "http://localhost:5194/api",
 ];
 
@@ -41,6 +42,7 @@ const requestBackend = async (urlPath, options = {}) => {
 
     try {
       const res = await fetch(fullUrl, {
+        mode: "cors",
         ...options,
         headers: {
           ...headers,

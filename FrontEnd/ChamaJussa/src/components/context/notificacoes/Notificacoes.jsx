@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
 export default function Notificacoes({ notificacoes = [] }) {
@@ -19,7 +19,7 @@ export default function Notificacoes({ notificacoes = [] }) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       {/* Título da Tela */}
       <Text style={styles.tituloHeader}>Notificações</Text>
 
@@ -53,13 +53,14 @@ export default function Notificacoes({ notificacoes = [] }) {
           </Text>
         </View>
       )}
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: 30,
+    width: "100%",
+    paddingBottom: 20,
   },
   tituloHeader: {
     fontSize: 22,
@@ -77,11 +78,16 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
+    ...Platform.select({
+      web: { boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.04)" },
+      default: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 4,
+        elevation: 2,
+      },
+    }),
   },
   iconeBox: {
     width: 42,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, View, ScrollView, SafeAreaView } from "react-native";
+import { StyleSheet, View, ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import Login from "./src/components/context/login/Login";
 import Header from "./src/components/context/header/Header";
@@ -96,7 +97,7 @@ export default function App() {
 
   // Listener para sincronizar abas diferentes em tempo real
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || typeof window.addEventListener !== "function") return;
 
     const handleStorageChange = (e) => {
       if (e.key === "chama_jussa_lista_os") {
@@ -333,6 +334,7 @@ export default function App() {
         <StatusBar style="dark" />
 
         <ScrollView
+          style={styles.mainScrollView}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
@@ -414,10 +416,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
   },
+  mainScrollView: {
+    width: "100%",
+    flex: 1,
+  },
   content: {
     width: "100%",
     maxWidth: 600,
     padding: 20,
-    paddingBottom: 85,
+    paddingBottom: 95,
+    alignSelf: "center",
+    flexGrow: 1,
   },
 });

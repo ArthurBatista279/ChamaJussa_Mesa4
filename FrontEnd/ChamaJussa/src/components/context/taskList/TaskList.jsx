@@ -103,7 +103,7 @@ export default function TaskList({ listaOS = [], onSelectOS }) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    width: "100%",
   },
   buscaContainer: {
     flexDirection: "row",
@@ -133,7 +133,6 @@ const styles = StyleSheet.create({
   },
   filtros: {
     flexDirection: "row",
-    gap: 8,
     paddingBottom: 12,
   },
   filtro: {
@@ -143,6 +142,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 6,
     paddingHorizontal: 16,
+    marginRight: 8,
   },
   filtroAtivo: {
     backgroundColor: "#A92D13",

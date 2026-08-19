@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Platform,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
@@ -258,11 +259,16 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    ...Platform.select({
+      web: { boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.05)" },
+      default: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
+      },
+    }),
   },
   txtVoltar: {
     fontSize: 13,
@@ -281,11 +287,16 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    ...Platform.select({
+      web: { boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.06)" },
+      default: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        elevation: 3,
+      },
+    }),
     marginBottom: 16,
   },
   codigoStatusRow: {
@@ -380,8 +391,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   infoCardsGrid: {
-    gap: 10,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   miniCard: {
     flexDirection: "row",
@@ -391,6 +401,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#F1F5F9",
+    marginBottom: 10,
   },
   iconCircle: {
     width: 36,
@@ -479,7 +490,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   gridAcoesADM: {
-    gap: 10,
+    marginBottom: 4,
   },
   btnAndamento: {
     height: 44,
@@ -490,6 +501,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: "#FDE68A",
+    marginBottom: 10,
   },
   txtAndamento: {
     color: "#92400E",
@@ -503,6 +515,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 10,
   },
   txtConcluir: {
     color: "#FFFFFF",
@@ -532,11 +545,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#A31F0A",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 3,
+    ...Platform.select({
+      web: { boxShadow: "0px 3px 5px rgba(163, 31, 10, 0.2)" },
+      default: {
+        shadowColor: "#A31F0A",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        elevation: 3,
+      },
+    }),
   },
   txtEditar: {
     color: "#FFFFFF",
