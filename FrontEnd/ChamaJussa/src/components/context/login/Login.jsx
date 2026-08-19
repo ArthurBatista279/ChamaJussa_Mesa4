@@ -5,41 +5,52 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
   SafeAreaView,
   ScrollView,
 } from "react-native";
+import { Feather } from "@expo/vector-icons";
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
 
   const handleEntrar = () => {
+    const emailLimpo = email.trim();
+
+    if (!emailLimpo) {
+      if (typeof window !== "undefined") {
+        window.alert("Por favor, insira o seu e-mail para continuar.");
+      }
+      return;
+    }
+
+    const isADM =
+      emailLimpo.toLowerCase().includes("anna") ||
+      emailLimpo.toLowerCase().includes("adm");
+
+    const handleEmail = emailLimpo.split("@")[0] || "Usuário";
+    const nomeFormatado = handleEmail
+      .replace(/[._-]/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
     if (onLogin) {
-      onLogin({ email: email || "kessia@email.com", nome: "Késsia Milena" });
+      onLogin({
+        email: emailLimpo,
+        nome: nomeFormatado,
+        cargo: isADM ? "ADM" : "Cliente",
+      });
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Logo Superior Direita */}
-        <View style={styles.topLogoContainer}>
-          <Image
-            source={require("../../../../assets/logo.png")}
-            style={styles.topLogo}
-            resizeMode="contain"
-          />
-        </View>
-
         <View style={styles.cardLogin}>
-          {/* Mascote / Logo Central */}
+          {/* Ícone Central Estilizado (Figma) */}
           <View style={styles.avatarBox}>
-            <Image
-              source={require("../../../../assets/image 5.png")}
-              style={styles.avatarImg}
-              resizeMode="contain"
-            />
+            <View style={styles.iconCircle}>
+              <Feather name="clipboard" size={44} color="#A31F0A" />
+            </View>
           </View>
 
           {/* Título e Subtítulo */}
@@ -97,16 +108,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: "100%",
   },
-  topLogoContainer: {
-    width: "100%",
-    maxWidth: 420,
-    alignItems: "flex-end",
-    marginBottom: 10,
-  },
-  topLogo: {
-    width: 90,
-    height: 35,
-  },
   cardLogin: {
     width: "100%",
     maxWidth: 420,
@@ -124,15 +125,21 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   avatarBox: {
-    width: 110,
-    height: 140,
+    width: 90,
+    height: 90,
     marginBottom: 16,
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarImg: {
-    width: "100%",
-    height: "100%",
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#FFF5F5",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#FECACA",
   },
   titulo: {
     fontSize: 22,
@@ -145,7 +152,48 @@ const styles = StyleSheet.create({
     color: "#64748B",
     textAlign: "center",
     marginTop: 4,
-    marginBottom: 24,
+    marginBottom: 18,
+  },
+  labelCargo: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#475569",
+    alignSelf: "flex-start",
+    marginBottom: 8,
+  },
+  cargoSelector: {
+    flexDirection: "row",
+    width: "100%",
+    gap: 8,
+    marginBottom: 18,
+  },
+  btnCargo: {
+    flex: 1,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  btnCargoAtivo: {
+    backgroundColor: "#2563EB",
+    borderColor: "#1D4ED8",
+  },
+  btnCargoAtivoADM: {
+    backgroundColor: "#A31F0A",
+    borderColor: "#7F1D1D",
+  },
+  txtCargo: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#64748B",
+  },
+  txtCargoAtivo: {
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   formGroup: {
     width: "100%",
@@ -184,7 +232,7 @@ const styles = StyleSheet.create({
   },
   textoBotao: {
     color: "#FFFFFF",
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
   },
   footerText: {

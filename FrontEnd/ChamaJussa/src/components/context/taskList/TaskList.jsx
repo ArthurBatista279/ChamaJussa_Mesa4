@@ -7,56 +7,14 @@ import {
   StyleSheet,
   ScrollView,
 } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import TaskItem from "../taskItem/TaskItem";
 
 export default function TaskList({ listaOS = [], onSelectOS }) {
   const [filtro, setFiltro] = useState("Todos");
   const [busca, setBusca] = useState("");
 
-  const dadosPadrao = [
-    {
-      id: "001",
-      codigo: "OS - 1001",
-      status: "Aberta",
-      prioridade: "Alta",
-      titulo: "Vazamento hidráulico",
-      equipamento: "Tubulação/Sifão da Pia",
-      local: "Banheiro Masculino - Bloco B - 2º Andar",
-      solicitante: "Késsia Milena",
-      descricao:
-        "Há um vazamento constante de água por baixo da pia do banheiro masculino do segundo andar do Bloco B. Está alagando o chão e causando risco de queda.",
-      data: "17/06/2026",
-      imagem: require("../../../../assets/image 4.jpg"),
-    },
-    {
-      id: "002",
-      codigo: "OS - 1002",
-      status: "Em Andamento",
-      prioridade: "Média",
-      titulo: "Troca de lâmpadas no Auditório",
-      equipamento: "Lâmpadas LED 50W",
-      local: "Auditório Central - Setor 03",
-      solicitante: "Carlos Eduardo",
-      descricao:
-        "Três lâmpadas de LED do setor central do auditório estão queimadas necessitando troca urgente antes do evento.",
-      data: "18/06/2026",
-    },
-    {
-      id: "003",
-      codigo: "OS - 1003",
-      status: "Concluída",
-      prioridade: "Baixa",
-      titulo: "Manutenção no Ar Condicionado",
-      equipamento: "Split Inverter 18000 BTUs",
-      local: "Sala 204 - Bloco A",
-      solicitante: "Mariana Souza",
-      descricao:
-        "Limpeza de filtros e higienização do aparelho de ar condicionado da Sala 204 finalizadas com sucesso.",
-      data: "15/06/2026",
-    },
-  ];
-
-  const osLista = listaOS.length > 0 ? listaOS : dadosPadrao;
+  const osLista = listaOS;
 
   const osFiltradas = osLista.filter((os) => {
     const atendeFiltro =
@@ -76,7 +34,7 @@ export default function TaskList({ listaOS = [], onSelectOS }) {
     <View style={styles.container}>
       {/* Campo de Busca */}
       <View style={styles.buscaContainer}>
-        <Text style={styles.iconeBusca}>🔍</Text>
+        <Feather name="search" size={18} color="#94A3B8" style={{ marginRight: 8 }} />
         <TextInput
           style={styles.inputBusca}
           placeholder="Buscar por código, título ou descrição..."
@@ -86,7 +44,7 @@ export default function TaskList({ listaOS = [], onSelectOS }) {
         />
         {busca ? (
           <TouchableOpacity onPress={() => setBusca("")}>
-            <Text style={styles.limparBusca}>✕</Text>
+            <Feather name="x" size={16} color="#94A3B8" style={{ paddingHorizontal: 6 }} />
           </TouchableOpacity>
         ) : null}
       </View>
@@ -131,7 +89,7 @@ export default function TaskList({ listaOS = [], onSelectOS }) {
           ))
         ) : (
           <View style={styles.vazioContainer}>
-            <Text style={styles.vazioIcone}>📋</Text>
+            <Feather name="clipboard" size={42} color="#CBD5E1" style={{ marginBottom: 10 }} />
             <Text style={styles.vazioTitulo}>Nenhuma OS encontrada</Text>
             <Text style={styles.vazioSub}>
               Tente alterar o filtro ou os termos da busca.

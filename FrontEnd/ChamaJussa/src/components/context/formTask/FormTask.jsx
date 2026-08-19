@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,14 +9,49 @@ import {
   Alert,
 } from "react-native";
 
-export default function FormTask({ onTaskCreated, onCancel }) {
-  const [titulo, setTitulo] = useState("");
-  const [equipamento, setEquipamento] = useState("");
-  const [setor, setSetor] = useState("");
-  const [descricao, setDescricao] = useState("");
-  const [imagem, setImagem] = useState("");
+export default function FormTask({
+  usuario,
+  taskToEdit,
+  onTaskCreated,
+  onTaskUpdated,
+  onCancel,
+}) {
+  const isEditing = Boolean(taskToEdit);
 
-  const handleAbrirOS = () => {
+  const [titulo, setTitulo] = useState(taskToEdit?.titulo || "");
+  const [equipamento, setEquipamento] = useState(taskToEdit?.equipamento || "");
+  const [setor, setSetor] = useState(taskToEdit?.local || "");
+  const [solicitante, setSolicitante] = useState(
+    taskToEdit?.solicitante || usuario?.nome || ""
+  );
+  const [descricao, setDescricao] = useState(taskToEdit?.descricao || "");
+  const [imagem, setImagem] = useState(
+    typeof taskToEdit?.imagem === "string" ? taskToEdit.imagem : ""
+  );
+
+  useEffect(() => {
+    if (taskToEdit) {
+      setTitulo(taskToEdit.titulo || taskToEdit.tituloProblema || "");
+      setEquipamento(taskToEdit.equipamento || taskToEdit.maquinaEquipamento || "");
+      setSetor(taskToEdit.local || taskToEdit.setor || taskToEdit.localSetor || "");
+      setSolicitante(taskToEdit.solicitante || taskToEdit.nomeSolicitante || usuario?.nome || "");
+      setDescricao(taskToEdit.descricao || taskToEdit.descricaoProblema || "");
+      setImagem(
+        typeof taskToEdit.imagem === "string"
+          ? taskToEdit.imagem
+          : taskToEdit.imagemUrl || taskToEdit.fotoUrl || ""
+      );
+    } else {
+      setTitulo("");
+      setEquipamento("");
+      setSetor("");
+      setSolicitante(usuario?.nome || "");
+      setDescricao("");
+      setImagem("");
+    }
+  }, [taskToEdit, usuario]);
+
+  const handleSalvarOS = () => {
     if (!titulo.trim() || !descricao.trim()) {
       if (typeof window !== "undefined") {
         window.alert("Por favor, preencha todos os campos obrigatórios.");
@@ -26,28 +61,67 @@ export default function FormTask({ onTaskCreated, onCancel }) {
       return;
     }
 
-    const novaOS = {
-      id: String(Date.now()),
-      codigo: `OS - ${Math.floor(Math.random() * 9000 + 1000)}`,
-      status: "Aberta",
-      titulo,
-      equipamento: equipamento || "Equipamento Geral",
-      local: setor || "Bloco Principal",
-      solicitante: "Késsia Milena",
-      descricao,
-      imagem: imagem || require("../../../../assets/image 4.jpg"),
-      data: new Date().toLocaleDateString("pt-BR"),
-    };
+    const dataAtual = new Date().toLocaleDateString("pt-BR");
 
-    if (onTaskCreated) {
-      onTaskCreated(novaOS);
+    if (isEditing) {
+      const osAtualizada = {
+        ...taskToEdit,
+        titulo: titulo.trim(),
+        tituloProblema: titulo.trim(),
+        equipamento: equipamento.trim() || "Equipamento Geral",
+        maquinaEquipamento: equipamento.trim() || "Equipamento Geral",
+        local: setor.trim() || "Bloco Principal",
+        setor: setor.trim() || "Bloco Principal",
+        localSetor: setor.trim() || "Bloco Principal",
+        solicitante: solicitante.trim() || usuario?.nome || "Solicitante",
+        nomeSolicitante: solicitante.trim() || usuario?.nome || "Solicitante",
+        descricao: descricao.trim(),
+        descricaoProblema: descricao.trim(),
+        imagem: imagem.trim() || taskToEdit.imagem || require("../../../../assets/image 4.jpg"),
+        imagemUrl: imagem.trim() || taskToEdit.imagemUrl || "",
+        fotoUrl: imagem.trim() || taskToEdit.fotoUrl || "",
+      };
+      if (onTaskUpdated) {
+        onTaskUpdated(osAtualizada);
+      }
+    } else {
+      const codigoGerado = `OS-${Math.floor(Math.random() * 9000 + 1000)}`;
+      const novaOS = {
+        id: String(Date.now()),
+        codigo: codigoGerado,
+        codigoOS: codigoGerado,
+        status: "Aberta",
+        statusOS: "Aberta",
+        titulo: titulo.trim(),
+        tituloProblema: titulo.trim(),
+        equipamento: equipamento.trim() || "Equipamento Geral",
+        maquinaEquipamento: equipamento.trim() || "Equipamento Geral",
+        local: setor.trim() || "Bloco Principal",
+        setor: setor.trim() || "Bloco Principal",
+        localSetor: setor.trim() || "Bloco Principal",
+        solicitante: solicitante.trim() || usuario?.nome || "Solicitante",
+        nomeSolicitante: solicitante.trim() || usuario?.nome || "Solicitante",
+        descricao: descricao.trim(),
+        descricaoProblema: descricao.trim(),
+        imagem: imagem.trim() || require("../../../../assets/image 4.jpg"),
+        imagemUrl: imagem.trim() || "",
+        fotoUrl: imagem.trim() || "",
+        data: dataAtual,
+        dataCriacao: dataAtual,
+        createdAt: new Date().toISOString(),
+      };
+      if (onTaskCreated) {
+        onTaskCreated(novaOS);
+      }
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       {/* Título da Tela */}
-      <Text style={styles.tituloHeader}>Criar ordem de serviço</Text>
+      <Text style={styles.tituloHeader}>
+        {isEditing ? "Edição de Ordem de Serviço" : "Criar ordem de serviço"}
+      </Text>
 
       <View style={styles.cardForm}>
         {/* Título do problema */}
@@ -85,10 +159,24 @@ export default function FormTask({ onTaskCreated, onCancel }) {
           </Text>
           <TextInput
             style={styles.input}
-            placeholder="Ex: Vazamento da pia"
+            placeholder="Ex: Banheiro Masculino"
             placeholderTextColor="#94A3B8"
             value={setor}
             onChangeText={setSetor}
+          />
+        </View>
+
+        {/* Nome do Solicitante */}
+        <View style={styles.grupoInput}>
+          <Text style={styles.label}>
+            Nome do Solicitante <Text style={styles.asterisco}>*</Text>
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Digite o nome do solicitante"
+            placeholderTextColor="#94A3B8"
+            value={solicitante}
+            onChangeText={setSolicitante}
           />
         </View>
 
@@ -123,9 +211,11 @@ export default function FormTask({ onTaskCreated, onCancel }) {
           />
         </View>
 
-        {/* Botão Abrir Ordem de Serviço */}
-        <TouchableOpacity style={styles.btnAbrirOS} onPress={handleAbrirOS} activeOpacity={0.85}>
-          <Text style={styles.txtAbrirOS}>Abrir Ordem de Serviço</Text>
+        {/* Botão Salvar / Abrir Ordem de Serviço */}
+        <TouchableOpacity style={styles.btnAbrirOS} onPress={handleSalvarOS} activeOpacity={0.85}>
+          <Text style={styles.txtAbrirOS}>
+            {isEditing ? "Salvar Alterações" : "Abrir Ordem de Serviço"}
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

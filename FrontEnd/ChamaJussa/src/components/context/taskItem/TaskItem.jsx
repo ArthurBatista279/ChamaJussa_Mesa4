@@ -1,17 +1,17 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Feather } from "@expo/vector-icons";
 
 export default function TaskItem({ os, onPress }) {
-  const item = os || {
-    id: "001",
-    codigo: "OS - 001",
-    status: "Aberta",
-    prioridade: "Alta",
-    titulo: "Vazamento hidráulico no Bloco B",
-    descricao:
-      "Há um vazamento constante de água por baixo da pia do banheiro masculino do segundo andar do Bloco B...",
-    local: "Bloco B - Banheiro Masculino (2º Andar)",
-    data: "19/08/2026",
+  const raw = os || {};
+  const item = {
+    id: raw.id || "001",
+    codigo: raw.codigo || raw.codigoOS || "OS-1001",
+    status: raw.status || raw.statusOS || "Aberta",
+    titulo: raw.titulo || raw.tituloProblema || "Sem título",
+    descricao: raw.descricao || raw.descricaoProblema || "",
+    local: raw.local || raw.setor || raw.localSetor || "Bloco Principal",
+    data: raw.data || raw.dataCriacao || raw.createdAt || "Hoje",
   };
 
   const getStatusColor = (status) => {
@@ -60,8 +60,14 @@ export default function TaskItem({ os, onPress }) {
       </Text>
 
       <View style={styles.rodapeCard}>
-        <Text style={styles.infoLocal}>📍 {item.local || "Bloco Principal"}</Text>
-        <Text style={styles.infoData}>📅 {item.data || "Hoje"}</Text>
+        <View style={styles.infoItem}>
+          <Feather name="map-pin" size={12} color="#64748B" style={{ marginRight: 4 }} />
+          <Text style={styles.infoLocal}>{item.local || "Bloco Principal"}</Text>
+        </View>
+        <View style={styles.infoItem}>
+          <Feather name="calendar" size={12} color="#94A3B8" style={{ marginRight: 4 }} />
+          <Text style={styles.infoData}>{item.data || "Hoje"}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -127,6 +133,10 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: "#F1F5F9",
+  },
+  infoItem: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   infoLocal: {
     fontSize: 11,
