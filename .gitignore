@@ -4,3 +4,10 @@ bin/
 obj/
 *.user
 *.suo
+
+# Visual Studio
+**/.vs/
+**/bin/
+**/obj/
+*.user
+*.suo
