@@ -9,6 +9,8 @@ import {
   Alert,
 } from "react-native";
 
+import { generateGuid } from "../../../services/api";
+
 export default function FormTask({
   usuario,
   taskToEdit,
@@ -85,9 +87,12 @@ export default function FormTask({
         onTaskUpdated(osAtualizada);
       }
     } else {
-      const codigoGerado = `OS-${Math.floor(Math.random() * 9000 + 1000)}`;
+      const nomeCriador = solicitante.trim() || usuario?.nome || "Cliente Solicitante";
+      const novoId = generateGuid();
+      const codigoGerado = `OS-${novoId.substring(0, 4).toUpperCase()}`;
       const novaOS = {
-        id: String(Date.now()),
+        id: novoId,
+        idPedido: novoId,
         codigo: codigoGerado,
         codigoOS: codigoGerado,
         status: "Aberta",
@@ -99,8 +104,9 @@ export default function FormTask({
         local: setor.trim() || "Bloco Principal",
         setor: setor.trim() || "Bloco Principal",
         localSetor: setor.trim() || "Bloco Principal",
-        solicitante: solicitante.trim() || usuario?.nome || "Solicitante",
-        nomeSolicitante: solicitante.trim() || usuario?.nome || "Solicitante",
+        solicitante: nomeCriador,
+        nomeSolicitante: nomeCriador,
+        nomeUsuario: nomeCriador,
         descricao: descricao.trim(),
         descricaoProblema: descricao.trim(),
         imagem: imagem.trim() || require("../../../../assets/image 4.jpg"),
@@ -109,6 +115,7 @@ export default function FormTask({
         data: dataAtual,
         dataCriacao: dataAtual,
         createdAt: new Date().toISOString(),
+        idUsuario: usuario?.idUsuario || usuario?.id,
       };
       if (onTaskCreated) {
         onTaskCreated(novaOS);

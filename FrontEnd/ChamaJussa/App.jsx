@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View, ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import Login from "./src/components/context/login/Login";
 import Header from "./src/components/context/header/Header";
@@ -184,6 +184,13 @@ export default function App() {
         );
       }
     } catch (e) {}
+
+    // Recarrega os pedidos da API C# sincronizando o mapa de usuários em tempo real
+    api.getPedidos().then((dadosBackend) => {
+      if (dadosBackend && Array.isArray(dadosBackend)) {
+        setListaOS(dadosBackend);
+      }
+    });
   };
 
   const handleUpdateUsuario = (novosDados) => {
@@ -212,12 +219,13 @@ export default function App() {
     try {
       if (typeof window !== "undefined" && window.localStorage) {
         window.localStorage.removeItem("chama_jussa_session");
+        window.localStorage.removeItem("chama_jussa_lista_os");
       }
     } catch (e) {}
   };
 
   const handleCriarOS = (novaOS) => {
-    setListaOS([novaOS, ...listaOS]);
+    setListaOS((prev) => [novaOS, ...prev]);
     setOsEmEdicao(null);
     setAbaAtiva("lista");
 
@@ -227,10 +235,34 @@ export default function App() {
       "criar"
     );
 
-    // Envia POST para a API do backend (/api/Pedidos) para gravar no Banco de Dados
+    // Envia POST para a API do backend (/api/Pedidos) e atualiza com o idPedido real do Banco de Dados
     api.criarPedido(novaOS).then((resposta) => {
-      if (resposta) {
-        console.log("Pedido salvo com sucesso na API/Banco de Dados:", resposta);
+      if (resposta && (resposta.idPedido || resposta.id)) {
+        const idReal = resposta.idPedido || resposta.id;
+        const nomeFinal =
+          resposta.nomeUsuario ||
+          resposta.NomeUsuario ||
+          novaOS.solicitante ||
+          novaOS.nomeSolicitante ||
+          novaOS.nomeUsuario ||
+          (novaOS.idUsuario === usuario?.idUsuario || novaOS.idUsuario === usuario?.id ? usuario?.nome : null) ||
+          "Cliente Solicitante";
+
+        const osSincronizada = {
+          ...novaOS,
+          id: idReal,
+          idPedido: idReal,
+          solicitante: nomeFinal,
+          nomeSolicitante: nomeFinal,
+          nomeUsuario: nomeFinal,
+          codigo: resposta.codigo || `OS-${String(idReal).substring(0, 4).toUpperCase()}`,
+          codigoOS: resposta.codigo || `OS-${String(idReal).substring(0, 4).toUpperCase()}`,
+        };
+
+        setListaOS((prev) =>
+          prev.map((item) => (item.id === novaOS.id ? osSincronizada : item))
+        );
+        console.log("OS sincronizada com ID real da API C#:", idReal);
       }
     });
   };
@@ -257,41 +289,50 @@ export default function App() {
     let osAlvo = null;
     setListaOS((prev) =>
       prev.map((item) => {
-        if (item.id === osId) {
+        if (item.id === osId || item.idPedido === osId) {
           osAlvo = { ...item, status: novoStatus, statusOS: novoStatus };
           return osAlvo;
         }
         return item;
       })
     );
+
     if (osAlvo) {
       setOsSelecionada(osAlvo);
       adicionarNotificacao(
         "Status Alterado",
-        `O status da ${osAlvo.codigo} foi alterado para '${novoStatus}'.`,
+        `O status da ${osAlvo.codigo || osAlvo.id} foi alterado para '${novoStatus}'.`,
         "status"
       );
 
-      // Envia PUT para a API do backend (/api/Pedidos/{id})
-      api.atualizarPedido(osId, osAlvo);
+      // Envia PATCH ou PUT para a API do backend (/api/Pedidos/{id}/status)
+      const targetId = osAlvo.idPedido || osAlvo.id || osId;
+      api.atualizarStatus(targetId, novoStatus);
     }
   };
 
-  const handleExcluirOS = (osId) => {
-    const osExcluida = listaOS.find((item) => item.id === osId);
-    setListaOS((prev) => prev.filter((item) => item.id !== osId));
+  const handleExcluirOS = async (osId) => {
+    const idParaExcluir = osId || osSelecionada?.id;
+    const osExcluida = listaOS.find(
+      (item) => item.id === idParaExcluir || item.idPedido === idParaExcluir
+    );
+
+    setListaOS((prev) =>
+      prev.filter((item) => item.id !== idParaExcluir && item.idPedido !== idParaExcluir)
+    );
     setOsSelecionada(null);
     setAbaAtiva("lista");
 
     if (osExcluida) {
       adicionarNotificacao(
         "OS Excluída",
-        `A Ordem de Serviço ${osExcluida.codigo} (${osExcluida.titulo}) foi excluída.`,
+        `A Ordem de Serviço ${osExcluida.codigo || osExcluida.id} (${osExcluida.titulo}) foi excluída.`,
         "excluir"
       );
+    }
 
-      // Envia DELETE para a API do backend (/api/Pedidos/{id})
-      api.excluirPedido(osId);
+    if (idParaExcluir) {
+      await api.excluirPedido(idParaExcluir);
     }
   };
 
@@ -300,110 +341,92 @@ export default function App() {
     setAbaAtiva("detalhes");
   };
 
-  const getTituloAba = () => {
-    switch (abaAtiva) {
-      case "lista":
-        return "Minhas OS's";
-      case "detalhes":
-        return "Detalhes da OS";
-      case "criar":
-        return osEmEdicao ? "Edição de OS" : "Criar Nova OS";
-      case "notificacoes":
-        return "Notificações";
-      case "perfil":
-        return "Perfil";
-      default:
-        return "Minhas OS's";
-    }
-  };
-
-  // Se não estiver autenticado, exibe a Tela 1 (Login)
-  if (!autenticado) {
-    return (
-      <View style={styles.appContainer}>
-        <StatusBar style="dark" />
-        <Login onLogin={handleLogin} />
-      </View>
-    );
-  }
-
-  // Telas internas autenticadas (Telas 02 a 06)
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.appContainer}>
-        <StatusBar style="dark" />
+    <SafeAreaProvider>
+      {!autenticado ? (
+        <View style={styles.appContainer}>
+          <StatusBar style="dark" />
+          <Login onLogin={handleLogin} />
+        </View>
+      ) : (
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.appContainer}>
+            <StatusBar style="dark" />
 
-        <ScrollView
-          style={styles.mainScrollView}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-        >
-          {abaAtiva === "lista" && (
-            <>
-              <Header
-                usuario={usuario.nome}
-                cargo={usuario.cargo}
-                titulo="Minhas OS's"
-                onNovaOS={() => {
+            <ScrollView
+              style={styles.mainScrollView}
+              contentContainerStyle={styles.content}
+              showsVerticalScrollIndicator={false}
+            >
+              {abaAtiva === "lista" && (
+                <>
+                  <Header
+                    usuario={usuario.nome}
+                    cargo={usuario.cargo}
+                    titulo="Minhas OS's"
+                    onNovaOS={() => {
+                      setOsEmEdicao(null);
+                      setAbaAtiva("criar");
+                    }}
+                  />
+                  <TaskList listaOS={listaOS} onSelectOS={handleSelecionarOS} />
+                </>
+              )}
+
+              {abaAtiva === "detalhes" && (
+                <DetalhesOS
+                  os={osSelecionada || (listaOS.length > 0 ? listaOS[0] : null)}
+                  usuario={usuario}
+                  onVoltar={() => setAbaAtiva("lista")}
+                  onEditar={(osParaEditar) => {
+                    setOsEmEdicao(osParaEditar);
+                    setAbaAtiva("criar");
+                  }}
+                  onMudarStatus={handleMudarStatusOS}
+                  onExcluir={handleExcluirOS}
+                />
+              )}
+
+              {abaAtiva === "criar" && (
+                <FormTask
+                  usuario={usuario}
+                  taskToEdit={osEmEdicao}
+                  onTaskCreated={handleCriarOS}
+                  onTaskUpdated={handleAtualizarOS}
+                  onCancel={() => {
+                    setOsEmEdicao(null);
+                    setAbaAtiva("lista");
+                  }}
+                />
+              )}
+
+              {abaAtiva === "notificacoes" && <Notificacoes notificacoes={notificacoes} />}
+
+              {abaAtiva === "perfil" && (
+                <PasPerfil
+                  usuario={usuario}
+                  onLogout={handleLogout}
+                  onUpdateUsuario={handleUpdateUsuario}
+                />
+              )}
+            </ScrollView>
+
+            <Footer
+              abaAtiva={abaAtiva}
+              onTrocarAba={(novaAba) => {
+                if (novaAba === "criar") {
                   setOsEmEdicao(null);
-                  setAbaAtiva("criar");
-                }}
-              />
-              <TaskList listaOS={listaOS} onSelectOS={handleSelecionarOS} />
-            </>
-          )}
-
-          {abaAtiva === "detalhes" && (
-            <DetalhesOS
-              os={osSelecionada || (listaOS.length > 0 ? listaOS[0] : null)}
-              usuario={usuario}
-              onVoltar={() => setAbaAtiva("lista")}
-              onEditar={(osParaEditar) => {
-                setOsEmEdicao(osParaEditar);
-                setAbaAtiva("criar");
-              }}
-              onMudarStatus={handleMudarStatusOS}
-              onExcluir={handleExcluirOS}
-            />
-          )}
-
-          {abaAtiva === "criar" && (
-            <FormTask
-              usuario={usuario}
-              taskToEdit={osEmEdicao}
-              onTaskCreated={handleCriarOS}
-              onTaskUpdated={handleAtualizarOS}
-              onCancel={() => {
-                setOsEmEdicao(null);
-                setAbaAtiva("lista");
+                }
+                setAbaAtiva(novaAba);
               }}
             />
-          )}
-
-          {abaAtiva === "notificacoes" && <Notificacoes notificacoes={notificacoes} />}
-
-          {abaAtiva === "perfil" && (
-            <PasPerfil
-              usuario={usuario}
-              onLogout={handleLogout}
-              onUpdateUsuario={handleUpdateUsuario}
-            />
-          )}
-        </ScrollView>
-
-        <Footer
-          abaAtiva={abaAtiva}
-          onTrocarAba={(novaAba) => {
-            if (novaAba === "criar") {
-              setOsEmEdicao(null);
-            }
-            setAbaAtiva(novaAba);
-          }}
-        />
-      </View>
-    </SafeAreaView>
+          </View>
+        </SafeAreaView>
+      )}
+    </SafeAreaProvider>
   );
 }
+
 
 const styles = StyleSheet.create({
   safeArea: {

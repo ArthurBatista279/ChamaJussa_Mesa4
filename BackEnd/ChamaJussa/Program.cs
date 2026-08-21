@@ -8,6 +8,12 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configurar Kestrel para aceitar conexões da rede Wi-Fi local (dispositivos móveis no celular)
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5263);
+});
+
 // 1. Configurar DbContext
 builder.Services.AddDbContext<DbTitaniumContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -102,7 +108,7 @@ if (app.Environment.IsDevelopment() || true)
     });
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
 

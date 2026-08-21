@@ -7,6 +7,7 @@ import {
   Image,
   ScrollView,
   Platform,
+  Alert,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
@@ -21,14 +22,22 @@ export default function DetalhesOS({
   const rawData = os || {};
 
   const dados = {
-    id: rawData.id || "001",
+    id: rawData.id || rawData.idPedido || "001",
     codigo: rawData.codigo || rawData.codigoOS || "OS-1001",
     status: rawData.status || rawData.statusOS || "Aberta",
     titulo: rawData.titulo || rawData.tituloProblema || "Ordem de Serviço",
     data: rawData.data || rawData.dataCriacao || rawData.createdAt || "Hoje",
     equipamento: rawData.equipamento || rawData.maquinaEquipamento || "Equipamento Geral",
     local: rawData.local || rawData.setor || rawData.localSetor || "Bloco Principal",
-    solicitante: rawData.solicitante || rawData.nomeSolicitante || "Não informado",
+    solicitante:
+      rawData.solicitante ||
+      rawData.nomeSolicitante ||
+      rawData.nomeUsuario ||
+      rawData.NomeUsuario ||
+      rawData.idUsuarioNavigation?.nome ||
+      rawData.IdUsuarioNavigation?.Nome ||
+      (rawData.idUsuario === usuario?.idUsuario || rawData.idUsuario === usuario?.id ? usuario?.nome : null) ||
+      "Cliente Solicitante",
     descricao: rawData.descricao || rawData.descricaoProblema || "Sem descrição informada.",
     imagem: rawData.imagem || rawData.imagemUrl || rawData.fotoUrl || require("../../../../assets/image 4.jpg"),
   };
@@ -37,12 +46,25 @@ export default function DetalhesOS({
   const statusAtual = dados.status || "Aberta";
 
   const handleExcluir = () => {
-    if (typeof window !== "undefined") {
+    const targetId = rawData.id || rawData.idPedido || dados.id;
+    const executarExclusao = () => {
+      if (onExcluir) onExcluir(targetId);
+    };
+
+    if (Platform.OS === "web" && typeof window !== "undefined" && typeof window.confirm === "function") {
       if (window.confirm(`Tem certeza que deseja excluir a ${dados.codigo}?`)) {
-        if (onExcluir) onExcluir(dados.id);
+        executarExclusao();
       }
     } else {
-      if (onExcluir) onExcluir(dados.id);
+      Alert.alert(
+        "Confirmar Exclusão",
+        `Tem certeza que deseja excluir a ${dados.codigo}?`,
+        [
+          { text: "Cancelar", style: "cancel" },
+          { text: "Excluir", style: "destructive", onPress: executarExclusao },
+        ],
+        { cancelable: true }
+      );
     }
   };
 
