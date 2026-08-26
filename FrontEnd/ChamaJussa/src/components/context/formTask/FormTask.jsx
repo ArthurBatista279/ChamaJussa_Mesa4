@@ -7,7 +7,11 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Image,
+  Platform,
 } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 
 import { generateGuid } from "../../../services/api";
 
@@ -53,6 +57,33 @@ export default function FormTask({
     }
   }, [taskToEdit, usuario]);
 
+  const handleSelecionarImagem = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (permissionResult.granted === false) {
+        const msg = "É necessária permissão para acessar suas fotos.";
+        if (Platform.OS === "web") window.alert(msg);
+        else Alert.alert("Permissão Necessária", msg);
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions ? ImagePicker.MediaTypeOptions.Images : "images",
+        allowsEditing: true,
+        quality: 0.7,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        const novaUri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        setImagem(novaUri);
+      }
+    } catch (error) {
+      console.warn("Erro ao selecionar imagem:", error);
+    }
+  };
+
   const handleSalvarOS = () => {
     if (!titulo.trim() || !descricao.trim()) {
       if (typeof window !== "undefined") {
@@ -64,6 +95,7 @@ export default function FormTask({
     }
 
     const dataAtual = new Date().toLocaleDateString("pt-BR");
+    const imagemValor = (typeof imagem === "string" ? imagem.trim() : imagem) || null;
 
     if (isEditing) {
       const osAtualizada = {
@@ -79,9 +111,9 @@ export default function FormTask({
         nomeSolicitante: solicitante.trim() || usuario?.nome || "Solicitante",
         descricao: descricao.trim(),
         descricaoProblema: descricao.trim(),
-        imagem: imagem.trim() || taskToEdit.imagem || require("../../../../assets/image 4.jpg"),
-        imagemUrl: imagem.trim() || taskToEdit.imagemUrl || "",
-        fotoUrl: imagem.trim() || taskToEdit.fotoUrl || "",
+        imagem: imagemValor || taskToEdit.imagem || require("../../../../assets/image 4.jpg"),
+        imagemUrl: typeof imagemValor === "string" ? imagemValor : taskToEdit.imagemUrl || "",
+        fotoUrl: typeof imagemValor === "string" ? imagemValor : taskToEdit.fotoUrl || "",
       };
       if (onTaskUpdated) {
         onTaskUpdated(osAtualizada);
@@ -109,9 +141,9 @@ export default function FormTask({
         nomeUsuario: nomeCriador,
         descricao: descricao.trim(),
         descricaoProblema: descricao.trim(),
-        imagem: imagem.trim() || require("../../../../assets/image 4.jpg"),
-        imagemUrl: imagem.trim() || "",
-        fotoUrl: imagem.trim() || "",
+        imagem: imagemValor || require("../../../../assets/image 4.jpg"),
+        imagemUrl: typeof imagemValor === "string" ? imagemValor : "",
+        fotoUrl: typeof imagemValor === "string" ? imagemValor : "",
         data: dataAtual,
         dataCriacao: dataAtual,
         createdAt: new Date().toISOString(),
@@ -209,13 +241,27 @@ export default function FormTask({
           <Text style={styles.label}>
             Imagem / Foto do problema <Text style={styles.asterisco}>*</Text>
           </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Insira imagem"
-            placeholderTextColor="#94A3B8"
-            value={imagem}
-            onChangeText={setImagem}
-          />
+          <View style={styles.rowImagemInput}>
+            <TextInput
+              style={[styles.input, { flex: 1, marginRight: 8 }]}
+              placeholder="URL da imagem ou selecione da galeria"
+              placeholderTextColor="#94A3B8"
+              value={imagem}
+              onChangeText={setImagem}
+            />
+            <TouchableOpacity
+              style={styles.btnPickImage}
+              onPress={handleSelecionarImagem}
+              activeOpacity={0.85}
+            >
+              <Feather name="camera" size={16} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+          {imagem ? (
+            <View style={styles.previewContainer}>
+              <Image source={{ uri: imagem }} style={styles.previewImage} resizeMode="cover" />
+            </View>
+          ) : null}
         </View>
 
         {/* Botão Salvar / Abrir Ordem de Serviço */}
@@ -287,5 +333,30 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "700",
+  },
+  rowImagemInput: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  btnPickImage: {
+    backgroundColor: "#A31F0A",
+    borderRadius: 6,
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  previewContainer: {
+    marginTop: 10,
+    width: "100%",
+    height: 140,
+    borderRadius: 8,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  previewImage: {
+    width: "100%",
+    height: "100%",
   },
 });

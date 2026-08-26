@@ -41,9 +41,9 @@ const API_ENDPOINTS =
   Platform.OS === "web"
     ? [
         ...(configuredApiUrl ? [configuredApiUrl] : []),
-        // Web Browser no PC: HTTPS na porta 7194 sem redirecionamento 307 de preflight CORS
-        "https://localhost:7194/api",
+        // Web Browser no PC: tenta HTTP primeiro (5263), depois HTTPS (7194)
         "http://localhost:5263/api",
+        "https://localhost:7194/api",
       ]
     : [
         ...(configuredApiUrl ? [configuredApiUrl] : []),

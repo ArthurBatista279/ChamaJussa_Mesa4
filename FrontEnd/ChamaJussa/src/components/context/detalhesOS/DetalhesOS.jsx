@@ -10,6 +10,7 @@ import {
   Alert,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 
 export default function DetalhesOS({
   os,
@@ -18,8 +19,21 @@ export default function DetalhesOS({
   onEditar,
   onMudarStatus,
   onExcluir,
+  onUpdateOS,
 }) {
   const rawData = os || {};
+
+  const defaultAsset = require("../../../../assets/image 4.jpg");
+
+  const getFotoSource = (img) => {
+    if (typeof img === "string" && img.trim().length > 0) {
+      return { uri: img };
+    }
+    if (typeof img === "number") {
+      return img;
+    }
+    return defaultAsset;
+  };
 
   const dados = {
     id: rawData.id || rawData.idPedido || "001",
@@ -39,11 +53,53 @@ export default function DetalhesOS({
       (rawData.idUsuario === usuario?.idUsuario || rawData.idUsuario === usuario?.id ? usuario?.nome : null) ||
       "Cliente Solicitante",
     descricao: rawData.descricao || rawData.descricaoProblema || "Sem descrição informada.",
-    imagem: rawData.imagem || rawData.imagemUrl || rawData.fotoUrl || require("../../../../assets/image 4.jpg"),
+    imagem: rawData.imagem || rawData.imagemUrl || rawData.fotoUrl || defaultAsset,
   };
 
   const isADM = usuario?.cargo === "ADM";
   const statusAtual = dados.status || "Aberta";
+
+  const handleSelecionarImagem = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (permissionResult.granted === false) {
+        const msg = "É necessária permissão para acessar suas fotos.";
+        if (Platform.OS === "web") {
+          window.alert(msg);
+        } else {
+          Alert.alert("Permissão Necessária", msg);
+        }
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions ? ImagePicker.MediaTypeOptions.Images : "images",
+        allowsEditing: true,
+        quality: 0.7,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        const novaUri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+
+        const osAtualizada = {
+          ...rawData,
+          imagem: novaUri,
+          imagemUrl: novaUri,
+          fotoUrl: novaUri,
+        };
+
+        if (onUpdateOS) {
+          onUpdateOS(osAtualizada);
+        } else if (onEditar) {
+          onEditar(osAtualizada);
+        }
+      }
+    } catch (error) {
+      console.warn("Erro ao selecionar imagem:", error);
+    }
+  };
 
   const handleExcluir = () => {
     const targetId = rawData.id || rawData.idPedido || dados.id;
@@ -191,63 +247,66 @@ export default function DetalhesOS({
         </View>
         <View style={styles.imagemContainer}>
           <Image
-            source={
-              typeof dados.imagem === "string"
-                ? { uri: dados.imagem }
-                : dados.imagem || require("../../../../assets/image 4.jpg")
-            }
+            source={getFotoSource(dados.imagem)}
             style={styles.imagemOS}
             resizeMode="cover"
           />
         </View>
+        
+        <TouchableOpacity
+          style={styles.btnCarregarFoto}
+          onPress={handleSelecionarImagem}
+          activeOpacity={0.85}
+        >
+          <Feather name="camera" size={16} color="#A31F0A" style={{ marginRight: 8 }} />
+          <Text style={styles.txtCarregarFoto}>Carregar / Alterar Foto</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Painel Exclusivo do Modo Administrador (ADM) */}
-      {isADM && (
-        <View style={styles.cardADM}>
-          <View style={styles.headerADM}>
-            <Feather name="shield" size={18} color="#A31F0A" style={{ marginRight: 6 }} />
-            <Text style={styles.tituloPainelADM}>Painel de Gestão ADM</Text>
-          </View>
-          
-          <Text style={styles.subtituloPainelADM}>
-            Altere o status ou exclua a ordem de serviço conforme necessário.
-          </Text>
+      {/* Painel de Gestão da Ordem de Serviço */}
+      <View style={styles.cardADM}>
+        <View style={styles.headerADM}>
+          <Feather name="settings" size={18} color="#A31F0A" style={{ marginRight: 6 }} />
+          <Text style={styles.tituloPainelADM}>Gestão da Ordem de Serviço</Text>
+        </View>
+        
+        <Text style={styles.subtituloPainelADM}>
+          Altere o status ou exclua a ordem de serviço conforme necessário.
+        </Text>
 
-          <View style={styles.gridAcoesADM}>
-            {!isAndamento && (
-              <TouchableOpacity
-                style={styles.btnAndamento}
-                onPress={() => onMudarStatus && onMudarStatus(dados.id, "Em Andamento")}
-                activeOpacity={0.85}
-              >
-                <Feather name="clock" size={16} color="#D97706" style={{ marginRight: 6 }} />
-                <Text style={styles.txtAndamento}>Em Andamento</Text>
-              </TouchableOpacity>
-            )}
-
-            {!isConcluida && (
-              <TouchableOpacity
-                style={styles.btnConcluir}
-                onPress={() => onMudarStatus && onMudarStatus(dados.id, "Concluída")}
-                activeOpacity={0.85}
-              >
-                <Feather name="check-circle" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                <Text style={styles.txtConcluir}>Concluir OS</Text>
-              </TouchableOpacity>
-            )}
-
+        <View style={styles.gridAcoesADM}>
+          {!isAndamento && (
             <TouchableOpacity
-              style={styles.btnExcluir}
-              onPress={handleExcluir}
+              style={styles.btnAndamento}
+              onPress={() => onMudarStatus && onMudarStatus(dados.id, "Em Andamento")}
               activeOpacity={0.85}
             >
-              <Feather name="trash-2" size={16} color="#DC2626" style={{ marginRight: 6 }} />
-              <Text style={styles.txtExcluir}>Excluir OS</Text>
+              <Feather name="clock" size={16} color="#D97706" style={{ marginRight: 6 }} />
+              <Text style={styles.txtAndamento}>Em Andamento</Text>
             </TouchableOpacity>
-          </View>
+          )}
+
+          {!isConcluida && (
+            <TouchableOpacity
+              style={styles.btnConcluir}
+              onPress={() => onMudarStatus && onMudarStatus(dados.id, "Concluída")}
+              activeOpacity={0.85}
+            >
+              <Feather name="check-circle" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Text style={styles.txtConcluir}>Concluir OS</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={styles.btnExcluir}
+            onPress={handleExcluir}
+            activeOpacity={0.85}
+          >
+            <Feather name="trash-2" size={16} color="#DC2626" style={{ marginRight: 6 }} />
+            <Text style={styles.txtExcluir}>Excluir OS</Text>
+          </TouchableOpacity>
         </View>
-      )}
+      </View>
 
       {/* Botão Principal de Edição */}
       <TouchableOpacity
@@ -581,6 +640,23 @@ const styles = StyleSheet.create({
   txtEditar: {
     color: "#FFFFFF",
     fontSize: 15,
+    fontWeight: "700",
+  },
+  btnCarregarFoto: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF5F5",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginTop: 10,
+  },
+  txtCarregarFoto: {
+    color: "#A31F0A",
+    fontSize: 13,
     fontWeight: "700",
   },
 });

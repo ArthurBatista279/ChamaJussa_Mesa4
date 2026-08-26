@@ -1,33 +1,52 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useRouter, usePathname } from "expo-router";
 
-export default function Footer({ abaAtiva = "lista", onTrocarAba }) {
+export default function Footer({ abaAtiva, onTrocarAba }) {
+  const router = useRouter();
+  const pathname = usePathname();
+
   const menus = [
-    { id: "lista", label: "Minhas OS", icone: "clipboard" },
-    { id: "criar", label: "Criar OS", icone: "plus-circle" },
-    { id: "notificacoes", label: "Notificações", icone: "bell" },
-    { id: "perfil", label: "Perfil", icone: "user" },
+    { id: "lista", label: "Minhas OS", icone: "clipboard", path: "/" },
+    { id: "criar", label: "Criar OS", icone: "plus-circle", path: "/criar" },
+    { id: "notificacoes", label: "Notificações", icone: "bell", path: "/notificacoes" },
+    { id: "perfil", label: "Perfil", icone: "user", path: "/perfil" },
   ];
+
+  const handleNavigation = (item) => {
+    if (onTrocarAba) {
+      onTrocarAba(item.id);
+    }
+    try {
+      if (item.path === "/") {
+        router.push("/");
+      } else {
+        router.push(item.path);
+      }
+    } catch (e) {}
+  };
 
   return (
     <View style={styles.menuContainer}>
       <View style={styles.menu}>
         {menus.map((item) => {
-          const ativo =
-            abaAtiva === item.id ||
-            (abaAtiva === "detalhes" && item.id === "lista");
-          const corIcone = ativo ? "#A31F0A" : "#64748B";
+          const isPathActive =
+            pathname === item.path ||
+            (item.path === "/" && (pathname === "/" || pathname === "/index")) ||
+            (abaAtiva && (abaAtiva === item.id || (abaAtiva === "detalhes" && item.id === "lista")));
+
+          const corIcone = isPathActive ? "#A31F0A" : "#64748B";
 
           return (
             <TouchableOpacity
               key={item.id}
               style={styles.item}
-              onPress={() => onTrocarAba && onTrocarAba(item.id)}
+              onPress={() => handleNavigation(item)}
               activeOpacity={0.7}
             >
               <Feather name={item.icone} size={22} color={corIcone} />
-              <Text style={[styles.texto, ativo && styles.textoAtivo]}>
+              <Text style={[styles.texto, isPathActive && styles.textoAtivo]}>
                 {item.label}
               </Text>
             </TouchableOpacity>
@@ -85,4 +104,3 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 });
-

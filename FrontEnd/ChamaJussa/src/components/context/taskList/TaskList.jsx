@@ -10,7 +10,7 @@ import {
 import { Feather } from "@expo/vector-icons";
 import TaskItem from "../taskItem/TaskItem";
 
-export default function TaskList({ listaOS = [], onSelectOS }) {
+export default function TaskList({ listaOS = [], onSelectOS, onRefresh, carregando }) {
   const [filtro, setFiltro] = useState("Todos");
   const [busca, setBusca] = useState("");
 
@@ -74,11 +74,28 @@ export default function TaskList({ listaOS = [], onSelectOS }) {
         })}
       </ScrollView>
 
-      {/* Resumo/Contador */}
+      {/* Resumo/Contador e Sincronização */}
       <View style={styles.contadorContainer}>
         <Text style={styles.textoContador}>
           Exibindo <Text style={styles.destaqueContador}>{osFiltradas.length}</Text> ordem(ns) de serviço
         </Text>
+
+        {onRefresh ? (
+          <TouchableOpacity
+            style={styles.btnSync}
+            onPress={onRefresh}
+            activeOpacity={0.7}
+            disabled={carregando}
+          >
+            <Feather
+              name="refresh-cw"
+              size={13}
+              color="#A31F0A"
+              style={[{ marginRight: 4 }, carregando && { opacity: 0.5 }]}
+            />
+            <Text style={styles.txtSync}>Sincronizar</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       {/* Lista de Itens */}
@@ -158,6 +175,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   contadorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 12,
   },
   textoContador: {
@@ -167,6 +187,21 @@ const styles = StyleSheet.create({
   destaqueContador: {
     fontWeight: "700",
     color: "#A92D13",
+  },
+  btnSync: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF5F5",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+  txtSync: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#A31F0A",
   },
   lista: {
     marginTop: 4,

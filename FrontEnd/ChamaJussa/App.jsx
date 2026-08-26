@@ -129,15 +129,126 @@ export default function App() {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  // Buscar pedidos/OS do backend ao autenticar/iniciar o app
-  useEffect(() => {
-    if (autenticado) {
-      api.getPedidos().then((dadosBackend) => {
-        if (dadosBackend && Array.isArray(dadosBackend) && dadosBackend.length > 0) {
-          setListaOS(dadosBackend);
-        }
-      });
+  const getCacheImagens = () => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        const str = window.localStorage.getItem("chama_jussa_images_cache");
+        if (str) return JSON.parse(str);
+      }
+    } catch (e) {}
+    return {};
+  };
+
+  const salvarCacheImagem = (key, imagemUri) => {
+    if (!key || !imagemUri) return;
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        const cache = getCacheImagens();
+        const normKey = String(key).trim().toLowerCase();
+        cache[normKey] = imagemUri;
+        window.localStorage.setItem("chama_jussa_images_cache", JSON.stringify(cache));
+      }
+    } catch (e) {}
+  };
+
+  const buscarImagemCache = (item, cacheImg, itemLocal) => {
+    if (itemLocal && itemLocal.imagem) {
+      if (typeof itemLocal.imagem === "string" && itemLocal.imagem.length > 10) {
+        return itemLocal.imagem;
+      }
+      if (typeof itemLocal.imagem === "number") {
+        return itemLocal.imagem;
+      }
     }
+
+    const chaves = [
+      item.id,
+      item.idPedido,
+      item.codigo,
+      item.codigoOS,
+      item.titulo,
+      item.tituloProblema,
+    ];
+
+    for (const k of chaves) {
+      if (k) {
+        const norm = String(k).trim().toLowerCase();
+        if (cacheImg[norm]) return cacheImg[norm];
+      }
+    }
+
+    return item.imagem || null;
+  };
+
+  const [carregandoSync, setCarregandoSync] = useState(false);
+
+  const sincronizarComBackend = async () => {
+    if (!autenticado) return;
+    setCarregandoSync(true);
+    try {
+      const dadosBackend = await api.getPedidos();
+      if (dadosBackend && Array.isArray(dadosBackend)) {
+        setListaOS((prevLocal) => {
+          const mapLocal = {};
+          prevLocal.forEach((item) => {
+            if (item.id) mapLocal[String(item.id).toLowerCase()] = item;
+            if (item.idPedido) mapLocal[String(item.idPedido).toLowerCase()] = item;
+          });
+
+          const idsBackend = new Set(dadosBackend.map((b) => String(b.id || b.idPedido).toLowerCase()));
+          const cacheImg = getCacheImagens();
+
+          const novosItens = dadosBackend.map((b) => {
+            const idKey = String(b.id || b.idPedido).toLowerCase();
+            const itemLocal = mapLocal[idKey];
+
+            const imgSalva = buscarImagemCache(b, cacheImg, itemLocal);
+
+            return {
+              ...b,
+              imagem: imgSalva || require("./assets/image 4.jpg"),
+              imagemUrl: typeof imgSalva === "string" ? imgSalva : b.imagemUrl || "",
+              fotoUrl: typeof imgSalva === "string" ? imgSalva : b.fotoUrl || "",
+            };
+          });
+
+          // Atualiza a OS selecionada caso esteja sendo visualizada em Detalhes
+          setOsSelecionada((prevSelected) => {
+            if (!prevSelected) return null;
+            const targetId = String(prevSelected.id || prevSelected.idPedido).toLowerCase();
+            const itemAtualizado = novosItens.find(
+              (it) =>
+                String(it.id || it.idPedido).toLowerCase() === targetId ||
+                (it.titulo && prevSelected.titulo && it.titulo.toLowerCase() === prevSelected.titulo.toLowerCase())
+            );
+            return itemAtualizado || prevSelected;
+          });
+
+          const itensSomenteLocais = prevLocal.filter(
+            (p) => p.id && !idsBackend.has(String(p.id).toLowerCase()) && !idsBackend.has(String(p.idPedido).toLowerCase())
+          );
+
+          return [...itensSomenteLocais, ...novosItens];
+        });
+      }
+    } catch (e) {
+      console.warn("Erro na sincronização:", e);
+    } finally {
+      setCarregandoSync(false);
+    }
+  };
+
+  // Buscar pedidos do backend ao autenticar e iniciar polling automático a cada 5 segundos
+  useEffect(() => {
+    if (!autenticado) return;
+
+    sincronizarComBackend();
+
+    const intervalId = setInterval(() => {
+      sincronizarComBackend();
+    }, 5000);
+
+    return () => clearInterval(intervalId);
   }, [autenticado]);
 
   // Função auxiliar para gerar notificações dinâmicas
@@ -225,6 +336,12 @@ export default function App() {
   };
 
   const handleCriarOS = (novaOS) => {
+    if (novaOS.imagem) {
+      if (novaOS.id) salvarCacheImagem(novaOS.id, novaOS.imagem);
+      if (novaOS.idPedido) salvarCacheImagem(novaOS.idPedido, novaOS.imagem);
+      if (novaOS.titulo) salvarCacheImagem(novaOS.titulo, novaOS.imagem);
+    }
+
     setListaOS((prev) => [novaOS, ...prev]);
     setOsEmEdicao(null);
     setAbaAtiva("lista");
@@ -239,6 +356,10 @@ export default function App() {
     api.criarPedido(novaOS).then((resposta) => {
       if (resposta && (resposta.idPedido || resposta.id)) {
         const idReal = resposta.idPedido || resposta.id;
+        if (novaOS.imagem) {
+          salvarCacheImagem(idReal, novaOS.imagem);
+        }
+
         const nomeFinal =
           resposta.nomeUsuario ||
           resposta.NomeUsuario ||
@@ -268,6 +389,12 @@ export default function App() {
   };
 
   const handleAtualizarOS = (osAtualizada) => {
+    if (osAtualizada.imagem) {
+      if (osAtualizada.id) salvarCacheImagem(osAtualizada.id, osAtualizada.imagem);
+      if (osAtualizada.idPedido) salvarCacheImagem(osAtualizada.idPedido, osAtualizada.imagem);
+      if (osAtualizada.titulo) salvarCacheImagem(osAtualizada.titulo, osAtualizada.imagem);
+    }
+
     setListaOS((prev) =>
       prev.map((item) => (item.id === osAtualizada.id ? osAtualizada : item))
     );
@@ -341,6 +468,26 @@ export default function App() {
     setAbaAtiva("detalhes");
   };
 
+  const handleUpdateOSDireto = (osAtualizada) => {
+    if (osAtualizada.imagem) {
+      if (osAtualizada.id) salvarCacheImagem(osAtualizada.id, osAtualizada.imagem);
+      if (osAtualizada.idPedido) salvarCacheImagem(osAtualizada.idPedido, osAtualizada.imagem);
+      if (osAtualizada.titulo) salvarCacheImagem(osAtualizada.titulo, osAtualizada.imagem);
+    }
+
+    setListaOS((prev) =>
+      prev.map((item) =>
+        item.id === osAtualizada.id || item.idPedido === osAtualizada.id ? osAtualizada : item
+      )
+    );
+    setOsSelecionada(osAtualizada);
+    adicionarNotificacao(
+      "Foto Atualizada",
+      `A foto da Ordem de Serviço '${osAtualizada.titulo || "OS"}' foi atualizada.`,
+      "editar"
+    );
+  };
+
   return (
     <SafeAreaProvider>
       {!autenticado ? (
@@ -362,14 +509,18 @@ export default function App() {
                 <>
                   <Header
                     usuario={usuario.nome}
-                    cargo={usuario.cargo}
                     titulo="Minhas OS's"
                     onNovaOS={() => {
                       setOsEmEdicao(null);
                       setAbaAtiva("criar");
                     }}
                   />
-                  <TaskList listaOS={listaOS} onSelectOS={handleSelecionarOS} />
+                  <TaskList
+                    listaOS={listaOS}
+                    onSelectOS={handleSelecionarOS}
+                    onRefresh={sincronizarComBackend}
+                    carregando={carregandoSync}
+                  />
                 </>
               )}
 
@@ -384,6 +535,7 @@ export default function App() {
                   }}
                   onMudarStatus={handleMudarStatusOS}
                   onExcluir={handleExcluirOS}
+                  onUpdateOS={handleUpdateOSDireto}
                 />
               )}
 

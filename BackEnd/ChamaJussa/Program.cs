@@ -8,10 +8,11 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configurar Kestrel para aceitar conexões da rede Wi-Fi local (dispositivos móveis no celular)
+// Kestrel: escuta em todas as interfaces de rede para suportar celular (Wi-Fi local)
+// e browser do PC ao mesmo tempo.
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(5263);
+    options.ListenAnyIP(5263);  // HTTP — celular na mesma rede Wi-Fi + browser local
 });
 
 // 1. Configurar DbContext

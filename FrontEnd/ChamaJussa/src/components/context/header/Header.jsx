@@ -1,9 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 
-export default function Header({ usuario = "", cargo = "Cliente", titulo = "Minhas OS's", onNovaOS }) {
-  const isADM = cargo === "ADM";
-
+export default function Header({ usuario = "", titulo = "Minhas OS's", onNovaOS }) {
   return (
     <View style={styles.headerContainer}>
       {/* Top Logo */}
@@ -18,14 +16,7 @@ export default function Header({ usuario = "", cargo = "Cliente", titulo = "Minh
       {/* Main Header Content */}
       <View style={styles.header}>
         <View style={styles.greetingBox}>
-          <View style={styles.userRow}>
-            <Text style={styles.ola}>{usuario ? `Olá, ${usuario}` : "Olá!"}</Text>
-            <View style={[styles.badgeCargo, isADM ? styles.badgeADM : styles.badgeCliente]}>
-              <Text style={[styles.txtBadge, isADM ? styles.txtBadgeADM : styles.txtBadgeCliente]}>
-                {isADM ? "ADM" : "Cliente"}
-              </Text>
-            </View>
-          </View>
+          <Text style={styles.ola}>{usuario ? `Olá, ${usuario}` : "Olá!"}</Text>
           <Text style={styles.titulo}>{titulo}</Text>
         </View>
 
@@ -65,34 +56,6 @@ const styles = StyleSheet.create({
     color: "#64748B",
     fontWeight: "500",
     marginRight: 6,
-  },
-  userRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  badgeCargo: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    borderWidth: 1,
-  },
-  badgeADM: {
-    backgroundColor: "#FEE2E2",
-    borderColor: "#FCA5A5",
-  },
-  badgeCliente: {
-    backgroundColor: "#EFF6FF",
-    borderColor: "#BFDBFE",
-  },
-  txtBadge: {
-    fontSize: 10,
-    fontWeight: "800",
-  },
-  txtBadgeADM: {
-    color: "#991B1B",
-  },
-  txtBadgeCliente: {
-    color: "#1E40AF",
   },
   titulo: {
     fontSize: 22,

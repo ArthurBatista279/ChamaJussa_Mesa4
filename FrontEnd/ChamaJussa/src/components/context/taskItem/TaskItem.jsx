@@ -1,17 +1,18 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
 export default function TaskItem({ os, onPress }) {
   const raw = os || {};
   const item = {
-    id: raw.id || "001",
+    id: raw.id || raw.idPedido || "001",
     codigo: raw.codigo || raw.codigoOS || "OS-1001",
     status: raw.status || raw.statusOS || "Aberta",
     titulo: raw.titulo || raw.tituloProblema || "Sem título",
     descricao: raw.descricao || raw.descricaoProblema || "",
     local: raw.local || raw.setor || raw.localSetor || "Bloco Principal",
     data: raw.data || raw.dataCriacao || raw.createdAt || "Hoje",
+    imagem: raw.imagem || raw.imagemUrl || raw.fotoUrl || null,
   };
 
   const getStatusColor = (status) => {
@@ -34,7 +35,7 @@ export default function TaskItem({ os, onPress }) {
     <TouchableOpacity
       style={styles.card}
       activeOpacity={0.8}
-      onPress={() => onPress && onPress(item)}
+      onPress={() => onPress && onPress(raw)}
     >
       <View style={styles.topo}>
         <View style={styles.codigoTag}>
@@ -53,11 +54,28 @@ export default function TaskItem({ os, onPress }) {
         </View>
       </View>
 
-      <Text style={styles.titulo}>{item.titulo}</Text>
+      <View style={styles.corpoRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.titulo}>{item.titulo}</Text>
+          <Text style={styles.descricao} numberOfLines={2}>
+            {item.descricao}
+          </Text>
+        </View>
 
-      <Text style={styles.descricao} numberOfLines={3}>
-        {item.descricao}
-      </Text>
+        {item.imagem ? (
+          <View style={styles.thumbContainer}>
+            <Image
+              source={
+                typeof item.imagem === "string"
+                  ? { uri: item.imagem }
+                  : item.imagem
+              }
+              style={styles.thumbImg}
+              resizeMode="cover"
+            />
+          </View>
+        ) : null}
+      </View>
 
       <View style={styles.rodapeCard}>
         <View style={styles.infoItem}>
@@ -119,6 +137,25 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
   },
+  corpoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  thumbContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    overflow: "hidden",
+    backgroundColor: "#F1F5F9",
+    marginLeft: 10,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  thumbImg: {
+    width: "100%",
+    height: "100%",
+  },
   titulo: {
     fontSize: 15,
     fontWeight: "700",
@@ -129,7 +166,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#64748B",
     lineHeight: 18,
-    marginBottom: 12,
   },
   rodapeCard: {
     flexDirection: "row",
