@@ -24,7 +24,12 @@ builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IPedidoService, PedidoService>();
 
 // 3. Configurar JWT
-var secretKey = builder.Configuration["Jwt:SecretKey"] ?? "ChamaJussaSuperSecretKey2026_SENAI_Mesa4!";
+var secretKey = builder.Configuration["Jwt:SecretKey"];
+if (string.IsNullOrWhiteSpace(secretKey))
+{
+    throw new InvalidOperationException("A chave secreta JWT ('Jwt:SecretKey') não foi configurada. Defina-a via User Secrets, variáveis de ambiente ou arquivo de configuração local.");
+}
+
 var issuer = builder.Configuration["Jwt:Issuer"] ?? "ChamaJussaAPI";
 var audience = builder.Configuration["Jwt:Audience"] ?? "ChamaJussaApp";
 

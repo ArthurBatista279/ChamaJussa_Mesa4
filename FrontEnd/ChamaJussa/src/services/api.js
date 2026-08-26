@@ -141,6 +141,8 @@ const requestBackend = async (urlPath, options = {}) => {
       } else {
         if (res.status === 401) {
           console.info(`[API C#] Requer autenticação (JWT Token). Faça login no app para obter o token.`);
+        } else if (res.status === 403) {
+          console.info(`[API C# HTTP 403] Acesso restrito para esta rota em ${fullUrl}`);
         } else {
           const errorText = await res.text();
           console.warn(`[API HTTP ${res.status}] em ${fullUrl}:`, errorText);
@@ -261,6 +263,28 @@ export const api = {
 
   // GET /api/Usuarios (Alimenta o cache de nomes de usuários)
   getUsuariosMap: async () => {
+    let sessionUser = null;
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        const sessionStr = window.localStorage.getItem("chama_jussa_session");
+        if (sessionStr) {
+          const sess = JSON.parse(sessionStr);
+          sessionUser = sess?.usuario;
+        }
+      }
+    } catch (e) {}
+
+    if (sessionUser) {
+      const key = sessionUser.idUsuario || sessionUser.id;
+      if (key && sessionUser.nome) {
+        cacheUsuarios[key] = sessionUser.nome;
+      }
+      // Clientes não possuem permissão no backend para listar todos os usuários (GET /api/Usuarios retoma 403)
+      if (sessionUser.perfil === "Cliente" || sessionUser.cargo === "Cliente") {
+        return cacheUsuarios;
+      }
+    }
+
     try {
       const list = await requestBackend("/Usuarios", { method: "GET" });
       if (list && Array.isArray(list)) {
@@ -282,19 +306,28 @@ export const api = {
     // Alimenta/atualiza mapa de usuários primeiro
     await api.getUsuariosMap();
 
-    const data = await requestBackend("/Pedidos", { method: "GET" });
-    if (data && Array.isArray(data)) {
-      let sessionUser = null;
-      try {
-        if (typeof window !== "undefined" && window.localStorage) {
-          const sessionStr = window.localStorage.getItem("chama_jussa_session");
-          if (sessionStr) {
-            const sess = JSON.parse(sessionStr);
-            sessionUser = sess?.usuario;
-          }
+    let sessionUser = null;
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        const sessionStr = window.localStorage.getItem("chama_jussa_session");
+        if (sessionStr) {
+          const sess = JSON.parse(sessionStr);
+          sessionUser = sess?.usuario;
         }
-      } catch (e) {}
+      }
+    } catch (e) {}
 
+    let data = await requestBackend("/Pedidos", { method: "GET" });
+
+    // Se GET /Pedidos retornou null (ex: restrição 403) e o usuário for Cliente, busca seus próprios pedidos via GET /Pedidos/usuario/{id}
+    if (!data && sessionUser) {
+      const userId = sessionUser.idUsuario || sessionUser.id;
+      if (userId && isGuid(userId)) {
+        data = await requestBackend(`/Pedidos/usuario/${userId}`, { method: "GET" });
+      }
+    }
+
+    if (data && Array.isArray(data)) {
       return data.map((p) => {
         const idUserKey = p.idUsuario;
         let nomeFinal =

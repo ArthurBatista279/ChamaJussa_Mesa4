@@ -17,7 +17,12 @@ public class TokenService : ITokenService
 
     public string GerarToken(TbUsuario usuario)
     {
-        var secretKey = _configuration["Jwt:SecretKey"] ?? "ChamaJussaSuperSecretKey2026_SENAI_Mesa4!";
+        var secretKey = _configuration["Jwt:SecretKey"];
+        if (string.IsNullOrWhiteSpace(secretKey))
+        {
+            throw new InvalidOperationException("A chave secreta JWT ('Jwt:SecretKey') não foi configurada.");
+        }
+
         var issuer = _configuration["Jwt:Issuer"] ?? "ChamaJussaAPI";
         var audience = _configuration["Jwt:Audience"] ?? "ChamaJussaApp";
 
