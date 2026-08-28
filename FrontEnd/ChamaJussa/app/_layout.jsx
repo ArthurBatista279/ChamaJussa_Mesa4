@@ -8,7 +8,7 @@ function RootLayoutNav() {
   const { autenticado } = useApp();
   const segments = useSegments();
 
-  const inAuthGroup = segments[0] === "login";
+  const inAuthGroup = segments[0] === "login"; 
 
   return (
     <>
