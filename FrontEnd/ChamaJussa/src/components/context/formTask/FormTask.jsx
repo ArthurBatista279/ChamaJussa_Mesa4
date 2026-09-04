@@ -14,6 +14,7 @@ import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 
 import { generateGuid } from "../../../services/api";
+import { pedirEObterImagem } from "../../../utils/imagePickerHelper";
 
 export default function FormTask({
   usuario,
@@ -59,22 +60,13 @@ export default function FormTask({
 
   const handleSelecionarImagem = async () => {
     try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (permissionResult.granted === false) {
-        const msg = "É necessária permissão para acessar suas fotos.";
-        if (Platform.OS === "web") window.alert(msg);
-        else Alert.alert("Permissão Necessária", msg);
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions ? ImagePicker.MediaTypeOptions.Images : "images",
+      const result = await pedirEObterImagem({
         allowsEditing: true,
         quality: 0.7,
         base64: true,
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
+      if (result && !result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
         const novaUri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
         setImagem(novaUri);

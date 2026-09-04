@@ -11,7 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
+import { pedirEObterImagem } from "../../../utils/imagePickerHelper";
 
 export default function PasPerfil({ usuario, onLogout, onUpdateUsuario }) {
   const [avatarUri, setAvatarUri] = useState(usuario?.avatar || null);
@@ -24,22 +24,13 @@ export default function PasPerfil({ usuario, onLogout, onUpdateUsuario }) {
 
   const handlePickImage = async () => {
     try {
-      if (Platform.OS !== "web") {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== "granted") {
-          Alert.alert("Permissão Necessária", "É necessária a permissão para acessar a galeria de fotos.");
-          return;
-        }
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions ? ImagePicker.MediaTypeOptions.Images : "images",
+      const result = await pedirEObterImagem({
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
+      if (result && !result.canceled && result.assets && result.assets.length > 0) {
         const newAvatar = result.assets[0].uri;
         setAvatarUri(newAvatar);
         if (onUpdateUsuario) {

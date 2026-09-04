@@ -27,7 +27,14 @@
     },
     "scheme": "chamajussa",
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O aplicativo precisa de acesso às suas fotos.",
+          "cameraPermission": "O aplicativo precisa de acesso à sua câmera para tirar fotos."
+        }
+      ]
     ]
   }
 }
